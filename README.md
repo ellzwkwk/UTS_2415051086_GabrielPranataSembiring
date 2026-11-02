@@ -1,17 +1,24 @@
-# dompetku
+# Dompetku
 
-A new Flutter project.
+Aplikasi pencatat keuangan sederhana untuk mencatat pemasukan dan pengeluaran
+harian, agar kondisi dompet mudah dipantau. Project UTS Pemrograman Mobile.
 
-## Getting Started
+- **Nama:** Gabriel Pranata Sembiring
+- **NIM:** 2415051086
+- **Kelas:** PTI-5C
 
-This project is a starting point for a Flutter application.
+## Arsitektur
 
-A few resources to get you started if this is your first Flutter project:
+Screen / Widget -> Provider -> Repository -> Service (REST API, Supabase)
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+| Folder | Tanggung jawab |
+|---|---|
+| lib/models | Bentuk data |
+| lib/services | Akses REST API dan Supabase |
+| lib/repositories | Perantara provider dan service |
+| lib/providers | State dan logika |
+| lib/screens | Halaman penuh |
+| lib/widgets | Komponen UI reusable |
+| lib/theme | Tema terang dan gelap |
+| lib/utils | Fungsi bantu |
+| lib/config | Konstanta dan konfigurasi |
