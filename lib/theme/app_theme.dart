@@ -50,6 +50,12 @@ class AppTheme {
     );
     final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(6));
 
+    TextStyle navLabel(bool selected) => TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: selected ? scheme.onSurface : tokens.muted,
+        );
+
     return base.copyWith(
       scaffoldBackgroundColor: scheme.surface,
       textTheme: textTheme,
@@ -78,6 +84,29 @@ class AppTheme {
           shape: shape,
           textStyle: const TextStyle(fontWeight: FontWeight.w600),
         ),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: scheme.surface,
+        surfaceTintColor: Colors.transparent,
+        indicatorColor: scheme.secondary,
+        iconTheme: WidgetStateProperty.resolveWith(
+          (states) => IconThemeData(
+            color: states.contains(WidgetState.selected)
+                ? scheme.onSecondary
+                : tokens.muted,
+          ),
+        ),
+        labelTextStyle: WidgetStateProperty.resolveWith(
+          (states) => navLabel(states.contains(WidgetState.selected)),
+        ),
+      ),
+      navigationRailTheme: NavigationRailThemeData(
+        backgroundColor: scheme.surface,
+        indicatorColor: scheme.secondary,
+        selectedIconTheme: IconThemeData(color: scheme.onSecondary),
+        unselectedIconTheme: IconThemeData(color: tokens.muted),
+        selectedLabelTextStyle: navLabel(true),
+        unselectedLabelTextStyle: navLabel(false),
       ),
       extensions: [tokens],
     );

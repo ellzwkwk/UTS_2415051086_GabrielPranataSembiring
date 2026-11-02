@@ -9,6 +9,7 @@ class SampleTx {
     required this.date,
     required this.amount,
     required this.isIncome,
+    this.note = '',
   });
 
   final String title;
@@ -18,6 +19,7 @@ class SampleTx {
   final String date;
   final int amount;
   final bool isIncome;
+  final String note;
 
   String get meta => '$date, $account';
 }
@@ -49,6 +51,7 @@ const sampleTransactions = <SampleTx>[
     date: '2 Nov',
     amount: 18000,
     isIncome: false,
+    note: 'Warteg dekat kampus',
   ),
   SampleTx(
     title: 'Bayar kos',
@@ -58,6 +61,7 @@ const sampleTransactions = <SampleTx>[
     date: '1 Nov',
     amount: 800000,
     isIncome: false,
+    note: 'Kos bulan November',
   ),
   SampleTx(
     title: 'Uang saku',

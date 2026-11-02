@@ -7,10 +7,13 @@ import '../utils/sample_data.dart';
 import '../widgets/double_rule.dart';
 import '../widgets/ledger_row.dart';
 import '../widgets/transaction_tile.dart';
-import 'history_screen.dart';
+import 'transaction_detail_screen.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.onSeeAll});
+
+  /// Dipanggil saat "Lihat semua" ditekan (pindah ke tab Riwayat).
+  final VoidCallback? onSeeAll;
 
   @override
   Widget build(BuildContext context) {
@@ -105,14 +108,7 @@ class HomeScreen extends StatelessWidget {
                 _SectionTitle(
                   'Terbaru',
                   actionLabel: 'Lihat semua',
-                  onAction: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const HistoryScreen(),
-                      ),
-                    );
-                  },
+                  onAction: onSeeAll,
                 ),
                 for (final t in sampleTransactions.take(2))
                   TransactionTile(
@@ -122,6 +118,7 @@ class HomeScreen extends StatelessWidget {
                     meta: t.meta,
                     amount: t.amount,
                     isIncome: t.isIncome,
+                    onTap: () => TransactionDetailScreen.open(context, t),
                   ),
               ],
             ),

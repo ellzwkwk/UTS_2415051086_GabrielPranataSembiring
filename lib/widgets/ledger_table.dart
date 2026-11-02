@@ -12,9 +12,10 @@ const double _categoryW = 150;
 
 /// Tabel buku kas untuk layar lebar.
 class LedgerTable extends StatelessWidget {
-  const LedgerTable({super.key, required this.items});
+  const LedgerTable({super.key, required this.items, this.onRowTap});
 
   final List<SampleTx> items;
+  final void Function(SampleTx tx)? onRowTap;
 
   @override
   Widget build(BuildContext context) {
@@ -38,21 +39,24 @@ class LedgerTable extends StatelessWidget {
           category: Text('Kategori', style: head),
         ),
         for (final t in items)
-          _shell(
-            border: Border(bottom: BorderSide(color: tokens.rule)),
-            name: Text(
-              t.title,
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            date: Text(t.date, style: small),
-            amount: Text(
-              '${t.isIncome ? '+' : '−'}${formatNumber(t.amount)}',
-              style: moneyStyle(
-                color: t.isIncome ? tokens.income : tokens.expense,
+          InkWell(
+            onTap: onRowTap == null ? null : () => onRowTap!(t),
+            child: _shell(
+              border: Border(bottom: BorderSide(color: tokens.rule)),
+              name: Text(
+                t.title,
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
+              date: Text(t.date, style: small),
+              amount: Text(
+                '${t.isIncome ? '+' : '−'}${formatNumber(t.amount)}',
+                style: moneyStyle(
+                  color: t.isIncome ? tokens.income : tokens.expense,
+                ),
+              ),
+              account: Text(t.account, style: small),
+              category: TagChip(label: t.category, tone: t.tone),
             ),
-            account: Text(t.account, style: small),
-            category: TagChip(label: t.category, tone: t.tone),
           ),
       ],
     );

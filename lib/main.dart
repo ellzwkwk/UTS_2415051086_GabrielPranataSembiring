@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'config/app_constants.dart';
-import 'screens/home_screen.dart';
+import 'screens/app_shell.dart';
 import 'theme/app_theme.dart';
 
 void main() {
@@ -18,7 +18,7 @@ class DompetkuApp extends StatelessWidget {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.system,
-      home: const HomeScreen(),
+      home: const AppShell(),
     );
   }
 }

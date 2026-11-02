@@ -6,13 +6,15 @@ class LedgerRow extends StatelessWidget {
   const LedgerRow({
     super.key,
     required this.label,
-    required this.value,
+    this.value,
     this.valueColor,
-  });
+    this.valueWidget,
+  }) : assert(value != null || valueWidget != null);
 
   final String label;
-  final String value;
+  final String? value;
   final Color? valueColor;
+  final Widget? valueWidget;
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +29,14 @@ class LedgerRow extends StatelessWidget {
         children: [
           Flexible(child: Text(label)),
           const SizedBox(width: 12),
-          Text(value, style: moneyStyle(color: valueColor)),
+          Flexible(
+            child: valueWidget ??
+                Text(
+                  value!,
+                  textAlign: TextAlign.right,
+                  style: moneyStyle(color: valueColor),
+                ),
+          ),
         ],
       ),
     );

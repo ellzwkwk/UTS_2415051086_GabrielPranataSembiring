@@ -4,6 +4,7 @@ import '../utils/sample_data.dart';
 import '../widgets/accounts_panel.dart';
 import '../widgets/ledger_table.dart';
 import '../widgets/transaction_tile.dart';
+import 'transaction_detail_screen.dart';
 
 const double _panelMinWidth = 1100;
 
@@ -27,13 +28,14 @@ class HistoryScreen extends StatelessWidget {
   }
 }
 
-TransactionTile _tile(SampleTx t) => TransactionTile(
+TransactionTile _tile(BuildContext context, SampleTx t) => TransactionTile(
       title: t.title,
       category: t.category,
       tone: t.tone,
       meta: t.meta,
       amount: t.amount,
       isIncome: t.isIncome,
+      onTap: () => TransactionDetailScreen.open(context, t),
     );
 
 class _CompactList extends StatelessWidget {
@@ -43,7 +45,7 @@ class _CompactList extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView.builder(
       itemCount: sampleTransactions.length,
-      itemBuilder: (context, i) => _tile(sampleTransactions[i]),
+      itemBuilder: (context, i) => _tile(context, sampleTransactions[i]),
     );
   }
 }
@@ -60,7 +62,7 @@ class _MediumGrid extends StatelessWidget {
         mainAxisExtent: 80,
       ),
       itemCount: sampleTransactions.length,
-      itemBuilder: (context, i) => _tile(sampleTransactions[i]),
+      itemBuilder: (context, i) => _tile(context, sampleTransactions[i]),
     );
   }
 }
@@ -80,10 +82,13 @@ class _ExpandedLedger extends StatelessWidget {
             return Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Expanded(
+                Expanded(
                   child: SingleChildScrollView(
-                    padding: EdgeInsets.fromLTRB(20, 8, 20, 24),
-                    child: LedgerTable(items: sampleTransactions),
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                    child: LedgerTable(
+                      items: sampleTransactions,
+                      onRowTap: (t) => TransactionDetailScreen.open(context, t),
+                    ),
                   ),
                 ),
                 if (showPanel)
