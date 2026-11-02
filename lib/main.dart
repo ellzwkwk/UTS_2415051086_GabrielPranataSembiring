@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'config/app_constants.dart';
+import 'screens/home_screen.dart';
+import 'theme/app_theme.dart';
 
 void main() {
   runApp(const DompetkuApp());
@@ -13,12 +15,10 @@ class DompetkuApp extends StatelessWidget {
     return MaterialApp(
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        appBar: AppBar(title: const Text(AppConstants.appName)),
-        body: const Center(
-          child: Text('${AppConstants.studentId} - ${AppConstants.studentName}'),
-        ),
-      ),
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.system,
+      home: const HomeScreen(),
     );
   }
 }
