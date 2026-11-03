@@ -44,3 +44,9 @@ String formatShortDate(DateTime date) =>
 /// DateTime(2026, 11, 2) -> "2 November 2026"
 String formatLongDate(DateTime date) =>
     '${date.day} ${_monthsLong[date.month - 1]} ${date.year}';
+
+/// 18148.0 -> "18.148", 115.4086 -> "115,41"
+String formatIdrRate(double value) {
+  if (value >= 1000) return formatNumber(value.round());
+  return value.toStringAsFixed(2).replaceAll('.', ',');
+}
