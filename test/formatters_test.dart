@@ -16,4 +16,15 @@ void main() {
       expect(formatRupiah(-12500), '-Rp 12.500');
     });
   });
+
+  group('tanggal ISO', () {
+    test('formatIsoDate memakai nol di depan', () {
+      expect(formatIsoDate(DateTime(2026, 11, 2)), '2026-11-02');
+    });
+
+    test('parseIsoDate hanya mengambil tanggal', () {
+      expect(parseIsoDate('2026-11-02'), DateTime(2026, 11, 2));
+      expect(parseIsoDate('2026-11-02T10:30:00'), DateTime(2026, 11, 2));
+    });
+  });
 }
