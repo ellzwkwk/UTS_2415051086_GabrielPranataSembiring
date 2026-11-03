@@ -26,3 +26,21 @@ DateTime parseIsoDate(String raw) {
   final parsed = DateTime.parse(raw);
   return DateTime(parsed.year, parsed.month, parsed.day);
 }
+
+const _monthsShort = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+  'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
+];
+
+const _monthsLong = [
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+];
+
+/// DateTime(2026, 11, 2) -> "2 Nov"
+String formatShortDate(DateTime date) =>
+    '${date.day} ${_monthsShort[date.month - 1]}';
+
+/// DateTime(2026, 11, 2) -> "2 November 2026"
+String formatLongDate(DateTime date) =>
+    '${date.day} ${_monthsLong[date.month - 1]} ${date.year}';

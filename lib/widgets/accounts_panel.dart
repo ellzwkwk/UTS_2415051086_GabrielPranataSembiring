@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import '../theme/app_tokens.dart';
 import '../theme/text_styles.dart';
 import '../utils/formatters.dart';
-import '../utils/sample_data.dart';
 import 'double_rule.dart';
 
 /// Panel saldo per akun, ditampilkan di samping tabel pada layar sangat lebar.
 class AccountsPanel extends StatelessWidget {
-  const AccountsPanel({super.key});
+  const AccountsPanel({super.key, required this.balances, required this.total});
+
+  final Map<String, int> balances;
+  final int total;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +27,7 @@ class AccountsPanel extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        for (final account in sampleAccounts)
+        for (final entry in balances.entries)
           Container(
             width: double.infinity,
             margin: const EdgeInsets.only(bottom: 10),
@@ -39,12 +41,12 @@ class AccountsPanel extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  account.$1,
+                  entry.key,
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  formatRupiah(account.$2),
+                  formatRupiah(entry.value),
                   style: moneyStyle(
                     size: 14,
                     weight: FontWeight.w500,
@@ -66,7 +68,7 @@ class AccountsPanel extends StatelessWidget {
                 style: TextStyle(fontWeight: FontWeight.w700),
               ),
               Text(
-                formatRupiah(sampleTotalBalance),
+                formatRupiah(total),
                 style: moneyStyle(size: 18, weight: FontWeight.w700),
               ),
             ],

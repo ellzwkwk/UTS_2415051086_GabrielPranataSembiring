@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import '../models/transaction.dart';
 import '../theme/app_tokens.dart';
 import '../theme/text_styles.dart';
+import '../utils/category_style.dart';
 import '../utils/formatters.dart';
-import '../utils/sample_data.dart';
 import 'tag_chip.dart';
 
 const double _dateW = 84;
@@ -14,8 +15,8 @@ const double _categoryW = 150;
 class LedgerTable extends StatelessWidget {
   const LedgerTable({super.key, required this.items, this.onRowTap});
 
-  final List<SampleTx> items;
-  final void Function(SampleTx tx)? onRowTap;
+  final List<Transaction> items;
+  final void Function(Transaction tx)? onRowTap;
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +48,7 @@ class LedgerTable extends StatelessWidget {
                 t.title,
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
-              date: Text(t.date, style: small),
+              date: Text(formatShortDate(t.date), style: small),
               amount: Text(
                 '${t.isIncome ? '+' : '−'}${formatNumber(t.amount)}',
                 style: moneyStyle(
@@ -55,7 +56,10 @@ class LedgerTable extends StatelessWidget {
                 ),
               ),
               account: Text(t.account, style: small),
-              category: TagChip(label: t.category, tone: t.tone),
+              category: TagChip(
+                label: t.category,
+                tone: toneForCategory(t.category, isIncome: t.isIncome),
+              ),
             ),
           ),
       ],

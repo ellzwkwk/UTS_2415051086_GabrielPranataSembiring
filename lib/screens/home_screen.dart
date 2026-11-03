@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../config/app_constants.dart';
+import '../providers/transaction_provider.dart';
 import '../theme/app_tokens.dart';
 import '../theme/text_styles.dart';
 import '../utils/formatters.dart';
-import '../utils/sample_data.dart';
 import '../widgets/double_rule.dart';
+import '../widgets/error_view.dart';
 import '../widgets/ledger_row.dart';
 import '../widgets/transaction_tile.dart';
 import 'transaction_detail_screen.dart';
@@ -19,6 +21,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final tokens = context.tokens;
+    final p = context.watch<TransactionProvider>();
 
     return Scaffold(
       body: SafeArea(
@@ -48,84 +51,101 @@ class HomeScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                LedgerRow(
-                  label: 'Saldo awal bulan',
-                  value: formatNumber(1000000),
-                ),
-                LedgerRow(
-                  label: 'Masuk bulan ini',
-                  value: '+${formatNumber(2450000)}',
-                  valueColor: tokens.income,
-                ),
-                LedgerRow(
-                  label: 'Keluar bulan ini',
-                  value: '−${formatNumber(830500)}',
-                  valueColor: tokens.expense,
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
-                  child: DoubleRule(),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Total saldo',
-                        style: TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                      Text(
-                        formatRupiah(sampleTotalBalance),
-                        style: moneyStyle(size: 26, weight: FontWeight.w700),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () {},
-                          child: const Text('+ Pemasukan'),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () {},
-                          child: const Text('− Pengeluaran'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const _SectionTitle('Akun'),
-                for (final account in sampleAccounts)
-                  LedgerRow(label: account.$1, value: formatNumber(account.$2)),
-                _SectionTitle(
-                  'Terbaru',
-                  actionLabel: 'Lihat semua',
-                  onAction: onSeeAll,
-                ),
-                for (final t in sampleTransactions.take(2))
-                  TransactionTile(
-                    title: t.title,
-                    category: t.category,
-                    tone: t.tone,
-                    meta: t.meta,
-                    amount: t.amount,
-                    isIncome: t.isIncome,
-                    onTap: () => TransactionDetailScreen.open(context, t),
-                  ),
+                if (p.isLoading)
+                  const Padding(
+                    padding: EdgeInsets.all(48),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else if (p.error != null)
+                  ErrorView(message: p.error!, onRetry: p.load)
+                else
+                  ..._content(context, p),
               ],
             ),
           ),
         ),
       ),
     );
+  }
+
+  List<Widget> _content(BuildContext context, TransactionProvider p) {
+    final tokens = context.tokens;
+    final latest = p.latest(2);
+
+    return [
+      LedgerRow(
+        label: 'Saldo awal bulan',
+        value: formatNumber(p.openingBalance),
+      ),
+      LedgerRow(
+        label: 'Masuk bulan ini',
+        value: '+${formatNumber(p.incomeThisMonth)}',
+        valueColor: tokens.income,
+      ),
+      LedgerRow(
+        label: 'Keluar bulan ini',
+        value: '−${formatNumber(p.expenseThisMonth)}',
+        valueColor: tokens.expense,
+      ),
+      const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 20),
+        child: DoubleRule(),
+      ),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Total saldo',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+            Text(
+              formatRupiah(p.totalBalance),
+              style: moneyStyle(size: 26, weight: FontWeight.w700),
+            ),
+          ],
+        ),
+      ),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () {},
+                child: const Text('+ Pemasukan'),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () {},
+                child: const Text('− Pengeluaran'),
+              ),
+            ),
+          ],
+        ),
+      ),
+      const _SectionTitle('Akun'),
+      for (final entry in p.balanceByAccount.entries)
+        LedgerRow(label: entry.key, value: formatNumber(entry.value)),
+      _SectionTitle(
+        'Terbaru',
+        actionLabel: 'Lihat semua',
+        onAction: onSeeAll,
+      ),
+      if (latest.isEmpty)
+        const Padding(
+          padding: EdgeInsets.fromLTRB(20, 16, 20, 0),
+          child: Text('Belum ada transaksi.'),
+        ),
+      for (final t in latest)
+        TransactionTile(
+          transaction: t,
+          onTap: () => TransactionDetailScreen.open(context, t),
+        ),
+    ];
   }
 }
 

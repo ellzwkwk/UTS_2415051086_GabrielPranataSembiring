@@ -22,9 +22,20 @@ void main() {
       expect(formatIsoDate(DateTime(2026, 11, 2)), '2026-11-02');
     });
 
-    test('parseIsoDate hanya mengambil tanggal', () {
+    test('parseIsoDate hanya mengambil tanggalnya', () {
       expect(parseIsoDate('2026-11-02'), DateTime(2026, 11, 2));
       expect(parseIsoDate('2026-11-02T10:30:00'), DateTime(2026, 11, 2));
+    });
+  });
+
+  group('tanggal tampilan', () {
+    test('formatShortDate', () {
+      expect(formatShortDate(DateTime(2026, 11, 2)), '2 Nov');
+      expect(formatShortDate(DateTime(2026, 8, 17)), '17 Agu');
+    });
+
+    test('formatLongDate', () {
+      expect(formatLongDate(DateTime(2026, 11, 2)), '2 November 2026');
     });
   });
 }
