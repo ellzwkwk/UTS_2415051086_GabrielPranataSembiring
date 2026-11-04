@@ -3,6 +3,7 @@ import '../models/transaction.dart';
 import '../models/transaction_filter.dart';
 import '../repositories/transaction_repository.dart';
 import '../utils/category_style.dart';
+import '../utils/error_message.dart';
 
 class TransactionProvider extends ChangeNotifier {
   TransactionProvider(this._repository, {DateTime Function()? clock})
@@ -34,7 +35,7 @@ class TransactionProvider extends ChangeNotifier {
     try {
       _items = await _repository.getTransactions();
     } catch (e) {
-      _error = e.toString().replaceFirst('Exception: ', '');
+      _error = friendlyError(e);
     } finally {
       _isLoading = false;
       notifyListeners();

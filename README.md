@@ -22,3 +22,25 @@ Screen / Widget -> Provider -> Repository -> Service (REST API, Supabase)
 | lib/theme | Tema terang dan gelap |
 | lib/utils | Fungsi bantu |
 | lib/config | Konstanta dan konfigurasi |
+
+## Backend dan Database
+
+Data transaksi disimpan di **Supabase (PostgreSQL)**. Definisi tabel dan data awal
+ada di `supabase/schema.sql`.
+
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | bigint identity | Primary key |
+| student_id | text | NIM pemilik data |
+| title | text | Judul transaksi |
+| amount | bigint | Nominal rupiah, harus lebih dari 0 |
+| type | text | `income` atau `expense` |
+| category | text | Kategori |
+| account | text | `Tunai`, `Bank`, atau `E-wallet` |
+| note | text | Catatan |
+| trx_date | date | Tanggal transaksi |
+| created_at | timestamptz | Diisi otomatis |
+
+Row Level Security aktif dengan policy permisif **khusus praktikum lab**. Policy ini
+bukan pola produksi, karena siapa pun yang memegang key publishable dapat mengubah data.
+Aplikasi hanya memakai key publishable. Secret key / role key backend tidak digunakan.
