@@ -13,6 +13,16 @@ class SupabaseTransactionDataSource implements TransactionDataSource {
 
   static const _table = 'transactions';
 
+  /// 23514 = check constraint dilanggar (nominal, jenis, atau akun tidak valid).
+  ApiException _toApi(PostgrestException e, String action) {
+    if (e.code == '23514') {
+      return ApiException(
+        'Data ditolak database karena tidak memenuhi aturan tabel.',
+      );
+    }
+    return ApiException('Gagal $action: ${e.message}');
+  }
+
   @override
   Future<List<Transaction>> fetchAll() async {
     try {
@@ -40,11 +50,35 @@ class SupabaseTransactionDataSource implements TransactionDataSource {
 
       return Transaction.fromJson(row);
     } on PostgrestException catch (e) {
-      // 23514 = check constraint dilanggar (nominal, jenis, atau akun tidak valid)
-      if (e.code == '23514') {
-        throw ApiException('Data ditolak database karena tidak memenuhi aturan tabel.');
+      throw _toApi(e, 'menyimpan transaksi');
+    }
+  }
+
+  @override
+  Future<Transaction> update(Transaction transaction) async {
+    final id = transaction.id;
+    if (id == null) {
+      throw ApiException('Transaksi belum tersimpan sehingga tidak dapat diubah.');
+    }
+
+    try {
+      final rows = await _client
+          .from(_table)
+          .update(transaction.toJson())
+          .eq('id', id)
+          .eq('student_id', AppConstants.studentId)
+          .select();
+
+      // Jika id tidak ada atau policy RLS menolak, Supabase tidak melempar
+      // error. Hasilnya hanya daftar kosong, jadi kita periksa sendiri.
+      if (rows.isEmpty) {
+        throw ApiException(
+          'Transaksi tidak ditemukan atau perubahan ditolak oleh aturan akses database.',
+        );
       }
-      throw ApiException('Gagal menyimpan transaksi: ${e.message}');
+      return Transaction.fromJson(rows.first);
+    } on PostgrestException catch (e) {
+      throw _toApi(e, 'memperbarui transaksi');
     }
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../config/app_constants.dart';
+import '../models/transaction.dart';
 import '../providers/transaction_provider.dart';
 import '../theme/app_tokens.dart';
 import '../theme/text_styles.dart';
@@ -10,7 +11,6 @@ import '../widgets/error_view.dart';
 import '../widgets/ledger_row.dart';
 import '../widgets/transaction_tile.dart';
 import 'transaction_detail_screen.dart';
-import '../models/transaction.dart';
 import 'transaction_form_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -115,22 +115,6 @@ class HomeScreen extends StatelessWidget {
           children: [
             Expanded(
               child: OutlinedButton(
-                onPressed: () {},
-                child: const Text('+ Pemasukan'),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () {},
-                child: const Text('− Pengeluaran'),
-              ),
-            ),
-          ],
-        ),
-      ),
-            Expanded(
-              child: OutlinedButton(
                 onPressed: () => TransactionFormScreen.open(
                   context,
                   type: TransactionType.income,
@@ -138,6 +122,7 @@ class HomeScreen extends StatelessWidget {
                 child: const Text('+ Pemasukan'),
               ),
             ),
+            const SizedBox(width: 10),
             Expanded(
               child: OutlinedButton(
                 onPressed: () => TransactionFormScreen.open(
@@ -147,6 +132,9 @@ class HomeScreen extends StatelessWidget {
                 child: const Text('− Pengeluaran'),
               ),
             ),
+          ],
+        ),
+      ),
       const _SectionTitle('Akun'),
       for (final entry in p.balanceByAccount.entries)
         LedgerRow(label: entry.key, value: formatNumber(entry.value)),

@@ -55,6 +55,28 @@ class TransactionProvider extends ChangeNotifier {
     }
   }
 
+    /// Mengubah transaksi yang sudah ada. Jika gagal, melempar [ApiException]
+  /// dan daftar tidak berubah.
+  Future<Transaction> update(Transaction transaction) async {
+    try {
+      final saved = await _repository.updateTransaction(transaction);
+      _items = [for (final t in _items) t.id == saved.id ? saved : t];
+      notifyListeners();
+      return saved;
+    } catch (e) {
+      throw ApiException(friendlyError(e));
+    }
+  }
+
+  /// Versi terbaru sebuah transaksi, atau null jika tidak ditemukan.
+  Transaction? findById(int? id) {
+    if (id == null) return null;
+    for (final t in _items) {
+      if (t.id == id) return t;
+    }
+    return null;
+  }
+
   // ---- filter ----
 
   void setType(TransactionType? type) {

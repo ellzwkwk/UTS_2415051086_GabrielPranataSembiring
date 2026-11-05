@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show mapEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -14,9 +15,12 @@ import '../widgets/option_chip.dart';
 class TransactionFormScreen extends StatefulWidget {
   const TransactionFormScreen({
     super.key,
+    this.initial,
     this.initialType = TransactionType.expense,
   });
 
+  /// Jika diisi, form berjalan dalam mode edit.
+  final Transaction? initial;
   final TransactionType initialType;
 
   static Future<void> open(
@@ -30,24 +34,42 @@ class TransactionFormScreen extends StatefulWidget {
     );
   }
 
+  static Future<void> openEdit(BuildContext context, Transaction transaction) {
+    return Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => TransactionFormScreen(initial: transaction),
+      ),
+    );
+  }
+
   @override
   State<TransactionFormScreen> createState() => _TransactionFormScreenState();
 }
 
 class _TransactionFormScreenState extends State<TransactionFormScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _titleCtrl = TextEditingController();
-  final _amountCtrl = TextEditingController();
-  final _noteCtrl = TextEditingController();
+  late final TextEditingController _titleCtrl;
+  late final TextEditingController _amountCtrl;
+  late final TextEditingController _noteCtrl;
 
   late TransactionType _type;
   late String _category;
+  late String _account;
   late DateTime _date;
-  String _account = kAccounts.first;
   bool _isSaving = false;
+
+  bool get _isEdit => widget.initial != null;
 
   List<String> get _categories =>
       _type.isIncome ? kIncomeCategories : kExpenseCategories;
+
+  /// Kategori yang sudah tersimpan bisa saja tidak ada di daftar pilihan
+  /// (misalnya "Saldo awal"), jadi tetap dimasukkan agar dropdown tidak error.
+  List<String> get _categoryOptions {
+    final list = [..._categories];
+    if (!list.contains(_category)) list.insert(0, _category);
+    return list;
+  }
 
   DateTime get _today {
     final now = DateTime.now();
@@ -57,9 +79,14 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   @override
   void initState() {
     super.initState();
-    _type = widget.initialType;
-    _category = _categories.first;
-    _date = _today;
+    final i = widget.initial;
+    _type = i?.type ?? widget.initialType;
+    _category = i?.category ?? _categories.first;
+    _account = i?.account ?? kAccounts.first;
+    _date = i?.date ?? _today;
+    _titleCtrl = TextEditingController(text: i?.title ?? '');
+    _amountCtrl = TextEditingController(text: i?.amount.toString() ?? '');
+    _noteCtrl = TextEditingController(text: i?.note ?? '');
   }
 
   @override
@@ -99,33 +126,50 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     final provider = context.read<TransactionProvider>();
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
+    final initial = widget.initial;
+
+    final draft = Transaction(
+      id: initial?.id,
+      studentId: initial?.studentId ?? AppConstants.studentId,
+      title: _titleCtrl.text.trim(),
+      amount: parseAmount(_amountCtrl.text)!,
+      type: _type,
+      category: _category,
+      account: _account,
+      note: _noteCtrl.text.trim(),
+      date: _date,
+    );
+
+    // Tidak ada yang berubah: tutup tanpa mengirim permintaan.
+    if (initial != null && mapEquals(draft.toJson(), initial.toJson())) {
+      navigator.pop();
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Tidak ada perubahan')),
+      );
+      return;
+    }
 
     setState(() => _isSaving = true);
 
     try {
-      await provider.add(
-        Transaction(
-          studentId: AppConstants.studentId,
-          title: _titleCtrl.text.trim(),
-          amount: parseAmount(_amountCtrl.text)!,
-          type: _type,
-          category: _category,
-          account: _account,
-          note: _noteCtrl.text.trim(),
-          date: _date,
-        ),
-      );
+      if (_isEdit) {
+        await provider.update(draft);
+      } else {
+        await provider.add(draft);
+      }
       if (!mounted) return;
       navigator.pop();
       messenger.showSnackBar(
-        const SnackBar(content: Text('Transaksi berhasil disimpan')),
+        SnackBar(
+          content: Text(
+            _isEdit ? 'Perubahan berhasil disimpan' : 'Transaksi berhasil disimpan',
+          ),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSaving = false);
-      messenger.showSnackBar(
-        SnackBar(content: Text('Gagal menyimpan: $e')),
-      );
+      messenger.showSnackBar(SnackBar(content: Text('Gagal menyimpan: $e')));
     }
   }
 
@@ -139,7 +183,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       // Lapis 3: tombol kembali ditahan selama proses simpan.
       canPop: !_isSaving,
       child: Scaffold(
-        appBar: AppBar(title: const Text('Tambah transaksi')),
+        appBar: AppBar(
+          title: Text(_isEdit ? 'Edit transaksi' : 'Tambah transaksi'),
+        ),
         body: SafeArea(
           child: Align(
             alignment: Alignment.topCenter,
@@ -208,7 +254,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                       isExpanded: true,
                       decoration: const InputDecoration(labelText: 'Kategori'),
                       items: [
-                        for (final c in _categories)
+                        for (final c in _categoryOptions)
                           DropdownMenuItem(value: c, child: Text(c)),
                       ],
                       onChanged: _isSaving
@@ -278,7 +324,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                                 const Text('Menyimpan...'),
                               ],
                             )
-                          : const Text('Simpan'),
+                          : Text(_isEdit ? 'Simpan perubahan' : 'Simpan'),
                     ),
                   ],
                 ),

@@ -10,4 +10,7 @@ class TransactionRepository {
 
   Future<Transaction> createTransaction(Transaction transaction) =>
       _dataSource.create(transaction);
+
+  Future<Transaction> updateTransaction(Transaction transaction) =>
+      _dataSource.update(transaction);
 }

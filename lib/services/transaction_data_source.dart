@@ -8,4 +8,8 @@ abstract class TransactionDataSource {
   /// Menyimpan transaksi baru dan mengembalikan baris yang tersimpan
   /// (lengkap dengan id yang dibuat server).
   Future<Transaction> create(Transaction transaction);
+
+  /// Mengubah transaksi yang sudah ada (dicari berdasarkan id) dan
+  /// mengembalikan baris hasil perubahan.
+  Future<Transaction> update(Transaction transaction);
 }

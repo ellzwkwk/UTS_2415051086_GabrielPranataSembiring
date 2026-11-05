@@ -17,6 +17,8 @@ class _FlakyDataSource implements TransactionDataSource {
   }
   @override
   Future<Transaction> create(Transaction transaction) async => transaction;
+  @override
+  Future<Transaction> update(Transaction transaction) async => transaction;
 }
 
 TransactionProvider makeProvider({bool fail = false}) {

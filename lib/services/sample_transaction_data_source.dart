@@ -73,4 +73,16 @@ class SampleTransactionDataSource implements TransactionDataSource {
     _rows.add(created);
     return created;
   }
+
+  @override
+  Future<Transaction> update(Transaction transaction) async {
+    await Future.delayed(delay);
+    if (shouldFail) throw Exception('Gagal memperbarui data (simulasi)');
+
+    final index = _rows.indexWhere((t) => t.id == transaction.id);
+    if (index < 0) throw Exception('Transaksi tidak ditemukan');
+
+    _rows[index] = transaction;
+    return transaction;
+  }
 }
