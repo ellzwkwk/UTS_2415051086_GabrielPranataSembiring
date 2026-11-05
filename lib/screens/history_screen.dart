@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/transaction.dart';
+import '../models/transaction_filter.dart';
 import '../providers/transaction_provider.dart';
+import '../theme/app_tokens.dart';
 import '../utils/breakpoints.dart';
+import '../utils/refresh_transactions.dart';
 import '../widgets/accounts_panel.dart';
 import '../widgets/empty_view.dart';
 import '../widgets/error_view.dart';
 import '../widgets/ledger_table.dart';
 import '../widgets/option_chip.dart';
+import '../widgets/search_field.dart';
 import '../widgets/transaction_tile.dart';
 import 'transaction_detail_screen.dart';
 import 'transaction_form_screen.dart';
@@ -20,11 +24,28 @@ class HistoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<TransactionProvider>();
+    final p = context.watch<TransactionProvider>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Riwayat')),
-      body: _body(provider),
+      appBar: AppBar(
+        title: const Text('Riwayat'),
+        actions: [
+          IconButton(
+            tooltip: 'Muat ulang',
+            onPressed: (p.isLoading || p.isRefreshing)
+                ? null
+                : () => refreshTransactions(context),
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
+        bottom: p.isRefreshing
+            ? const PreferredSize(
+                preferredSize: Size.fromHeight(2),
+                child: LinearProgressIndicator(minHeight: 2),
+              )
+            : null,
+      ),
+      body: _body(context, p),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => TransactionFormScreen.open(context),
         icon: const Icon(Icons.add),
@@ -33,7 +54,7 @@ class HistoryScreen extends StatelessWidget {
     );
   }
 
-  Widget _body(TransactionProvider p) {
+  Widget _body(BuildContext context, TransactionProvider p) {
     if (p.isLoading) return const Center(child: CircularProgressIndicator());
     if (p.error != null) {
       return ErrorView(message: p.error!, onRetry: p.load);
@@ -41,24 +62,30 @@ class HistoryScreen extends StatelessWidget {
     if (!p.hasData) return const EmptyView(message: 'Belum ada transaksi.');
 
     final items = p.visibleItems;
+    Future<void> onRefresh() => refreshTransactions(context);
 
     return Column(
       children: [
-        _FilterBar(current: p.filter.type, onChanged: p.setType),
+        _FilterBar(provider: p, shown: items.length),
         Expanded(
           child: items.isEmpty
-              ? const EmptyView(
+              ? EmptyView(
                   message: 'Tidak ada transaksi yang cocok dengan filter.',
+                  actionLabel: 'Hapus filter',
+                  onAction: p.clearFilters,
                 )
               : LayoutBuilder(
                   builder: (context, constraints) {
                     return switch (screenSizeOf(constraints.maxWidth)) {
-                      ScreenSize.compact => _CompactList(items: items),
-                      ScreenSize.medium => _MediumGrid(items: items),
+                      ScreenSize.compact =>
+                        _CompactList(items: items, onRefresh: onRefresh),
+                      ScreenSize.medium =>
+                        _MediumGrid(items: items, onRefresh: onRefresh),
                       ScreenSize.expanded => _ExpandedLedger(
                           items: items,
                           balances: p.balanceByAccount,
                           total: p.totalBalance,
+                          onRefresh: onRefresh,
                         ),
                     };
                   },
@@ -70,36 +97,104 @@ class HistoryScreen extends StatelessWidget {
 }
 
 class _FilterBar extends StatelessWidget {
-  const _FilterBar({required this.current, required this.onChanged});
+  const _FilterBar({required this.provider, required this.shown});
 
-  final TransactionType? current;
-  final ValueChanged<TransactionType?> onChanged;
+  final TransactionProvider provider;
+  final int shown;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-      child: Wrap(
-        spacing: 10,
-        runSpacing: 8,
-        children: [
-          OptionChip(
-            label: 'Semua',
-            selected: current == null,
-            onTap: () => onChanged(null),
+    final tokens = context.tokens;
+    final f = provider.filter;
+    final total = provider.items.length;
+
+    Widget chip(String label, bool selected, VoidCallback onTap) {
+      return Padding(
+        padding: const EdgeInsets.only(right: 10),
+        child: OptionChip(label: label, selected: selected, onTap: onTap),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+          child: SearchField(
+            query: f.query,
+            onChanged: provider.setQuery,
+            hint: 'Cari judul, kategori, akun, atau catatan',
           ),
-          OptionChip(
-            label: 'Masuk',
-            selected: current == TransactionType.income,
-            onTap: () => onChanged(TransactionType.income),
+        ),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.fromLTRB(20, 8, 10, 8),
+          child: Row(
+            children: [
+              chip(
+                'Semua jenis',
+                f.type == null,
+                () => provider.setType(null),
+              ),
+              chip(
+                'Masuk',
+                f.type == TransactionType.income,
+                () => provider.setType(TransactionType.income),
+              ),
+              chip(
+                'Keluar',
+                f.type == TransactionType.expense,
+                () => provider.setType(TransactionType.expense),
+              ),
+              Container(
+                width: 1,
+                height: 24,
+                margin: const EdgeInsets.only(right: 10),
+                color: tokens.rule,
+              ),
+              chip(
+                'Semua waktu',
+                f.period == TransactionPeriod.all,
+                () => provider.setPeriod(TransactionPeriod.all),
+              ),
+              chip(
+                'Bulan ini',
+                f.period == TransactionPeriod.thisMonth,
+                () => provider.setPeriod(TransactionPeriod.thisMonth),
+              ),
+              chip(
+                'Bulan lalu',
+                f.period == TransactionPeriod.lastMonth,
+                () => provider.setPeriod(TransactionPeriod.lastMonth),
+              ),
+            ],
           ),
-          OptionChip(
-            label: 'Keluar',
-            selected: current == TransactionType.expense,
-            onTap: () => onChanged(TransactionType.expense),
+        ),
+        SizedBox(
+          height: 40,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 12, 0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Semantics(
+                    liveRegion: true,
+                    child: Text(
+                      'Menampilkan $shown dari $total transaksi',
+                      style: TextStyle(fontSize: 13, color: tokens.muted),
+                    ),
+                  ),
+                ),
+                if (f.isActive)
+                  TextButton(
+                    onPressed: provider.clearFilters,
+                    child: const Text('Reset filter'),
+                  ),
+              ],
+            ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -110,35 +205,47 @@ TransactionTile _tile(BuildContext context, Transaction t) => TransactionTile(
     );
 
 class _CompactList extends StatelessWidget {
-  const _CompactList({required this.items});
+  const _CompactList({required this.items, required this.onRefresh});
 
   final List<Transaction> items;
+  final Future<void> Function() onRefresh;
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      padding: const EdgeInsets.only(bottom: _fabSpace),
-      itemCount: items.length,
-      itemBuilder: (context, i) => _tile(context, items[i]),
+    return RefreshIndicator(
+      onRefresh: onRefresh,
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        padding: const EdgeInsets.only(bottom: _fabSpace),
+        itemCount: items.length,
+        itemBuilder: (context, i) => _tile(context, items[i]),
+      ),
     );
   }
 }
 
 class _MediumGrid extends StatelessWidget {
-  const _MediumGrid({required this.items});
+  const _MediumGrid({required this.items, required this.onRefresh});
 
   final List<Transaction> items;
+  final Future<void> Function() onRefresh;
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      padding: const EdgeInsets.only(top: 8, bottom: _fabSpace),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisExtent: 80,
+    return RefreshIndicator(
+      onRefresh: onRefresh,
+      child: GridView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        padding: const EdgeInsets.only(top: 8, bottom: _fabSpace),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          mainAxisExtent: 80,
+        ),
+        itemCount: items.length,
+        itemBuilder: (context, i) => _tile(context, items[i]),
       ),
-      itemCount: items.length,
-      itemBuilder: (context, i) => _tile(context, items[i]),
     );
   }
 }
@@ -148,11 +255,13 @@ class _ExpandedLedger extends StatelessWidget {
     required this.items,
     required this.balances,
     required this.total,
+    required this.onRefresh,
   });
 
   final List<Transaction> items;
   final Map<String, int> balances;
   final int total;
+  final Future<void> Function() onRefresh;
 
   @override
   Widget build(BuildContext context) {
@@ -167,11 +276,16 @@ class _ExpandedLedger extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, _fabSpace),
-                    child: LedgerTable(
-                      items: items,
-                      onRowTap: (t) => TransactionDetailScreen.open(context, t),
+                  child: RefreshIndicator(
+                    onRefresh: onRefresh,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(20, 8, 20, _fabSpace),
+                      child: LedgerTable(
+                        items: items,
+                        onRowTap: (t) =>
+                            TransactionDetailScreen.open(context, t),
+                      ),
                     ),
                   ),
                 ),

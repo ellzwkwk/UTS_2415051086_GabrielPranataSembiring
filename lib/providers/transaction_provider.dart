@@ -2,9 +2,9 @@ import 'package:flutter/foundation.dart';
 import '../models/transaction.dart';
 import '../models/transaction_filter.dart';
 import '../repositories/transaction_repository.dart';
+import '../services/api_exception.dart';
 import '../utils/category_style.dart';
 import '../utils/error_message.dart';
-import '../services/api_exception.dart';
 
 class TransactionProvider extends ChangeNotifier {
   TransactionProvider(this._repository, {DateTime Function()? clock})
@@ -17,6 +17,7 @@ class TransactionProvider extends ChangeNotifier {
 
   List<Transaction> _items = const [];
   bool _isLoading = false;
+  bool _isRefreshing = false;
   String? _error;
   TransactionFilter _filter = const TransactionFilter();
 
@@ -24,10 +25,14 @@ class TransactionProvider extends ChangeNotifier {
 
   List<Transaction> get items => List.unmodifiable(_items);
   bool get isLoading => _isLoading;
+
+  /// True saat memuat ulang di latar belakang (daftar lama tetap tampil).
+  bool get isRefreshing => _isRefreshing;
   String? get error => _error;
   bool get hasData => _items.isNotEmpty;
   TransactionFilter get filter => _filter;
 
+  /// Muat awal: mengosongkan error dan menampilkan loading penuh.
   Future<void> load() async {
     _isLoading = true;
     _error = null;
@@ -42,7 +47,29 @@ class TransactionProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
-    /// Menyimpan transaksi baru. Jika gagal, melempar [ApiException] dengan
+
+  /// Muat ulang tanpa menyentuh daftar yang sedang tampil.
+  /// Mengembalikan null jika berhasil, atau pesan kesalahan jika gagal
+  /// (data lama tetap dipertahankan).
+  Future<String?> refresh() async {
+    if (_isRefreshing || _isLoading) return null;
+
+    _isRefreshing = true;
+    notifyListeners();
+
+    try {
+      _items = await _repository.getTransactions();
+      _error = null;
+      return null;
+    } catch (e) {
+      return friendlyError(e);
+    } finally {
+      _isRefreshing = false;
+      notifyListeners();
+    }
+  }
+
+  /// Menyimpan transaksi baru. Jika gagal, melempar [ApiException] dengan
   /// pesan yang sudah ramah, supaya form dapat menampilkannya di SnackBar.
   Future<Transaction> add(Transaction transaction) async {
     try {
@@ -55,7 +82,7 @@ class TransactionProvider extends ChangeNotifier {
     }
   }
 
-    /// Mengubah transaksi yang sudah ada. Jika gagal, melempar [ApiException]
+  /// Mengubah transaksi yang sudah ada. Jika gagal, melempar [ApiException]
   /// dan daftar tidak berubah.
   Future<Transaction> update(Transaction transaction) async {
     try {
@@ -77,7 +104,7 @@ class TransactionProvider extends ChangeNotifier {
     return null;
   }
 
-    /// Menghapus transaksi. Daftar lokal hanya berubah jika server berhasil
+  /// Menghapus transaksi. Daftar lokal hanya berubah jika server berhasil
   /// menghapus; jika gagal, melempar [ApiException] dan data tetap utuh.
   Future<void> remove(Transaction transaction) async {
     final id = transaction.id;

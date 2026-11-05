@@ -11,6 +11,7 @@ import 'screens/app_shell.dart';
 import 'services/exchange_rate_service.dart';
 import 'services/supabase_transaction_data_source.dart';
 import 'theme/app_theme.dart';
+import 'utils/app_scroll_behavior.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -49,6 +50,7 @@ class DompetkuApp extends StatelessWidget {
     return MaterialApp(
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
+      scrollBehavior: const AppScrollBehavior(),
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.system,

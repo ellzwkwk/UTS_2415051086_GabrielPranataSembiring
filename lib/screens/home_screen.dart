@@ -6,6 +6,7 @@ import '../providers/transaction_provider.dart';
 import '../theme/app_tokens.dart';
 import '../theme/text_styles.dart';
 import '../utils/formatters.dart';
+import '../utils/refresh_transactions.dart';
 import '../widgets/double_rule.dart';
 import '../widgets/error_view.dart';
 import '../widgets/ledger_row.dart';
@@ -31,38 +32,42 @@ class HomeScreen extends StatelessWidget {
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 640),
-            child: ListView(
-              padding: const EdgeInsets.only(bottom: 24),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 28, 20, 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        AppConstants.appName,
-                        style: theme.textTheme.headlineMedium
-                            ?.copyWith(fontWeight: FontWeight.w700),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${AppConstants.studentId} - ${AppConstants.studentName}',
-                        style: theme.textTheme.bodySmall
-                            ?.copyWith(color: tokens.muted),
-                      ),
-                    ],
+            child: RefreshIndicator(
+              onRefresh: () => refreshTransactions(context),
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.only(bottom: 24),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 28, 20, 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          AppConstants.appName,
+                          style: theme.textTheme.headlineMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${AppConstants.studentId} - ${AppConstants.studentName}',
+                          style: theme.textTheme.bodySmall
+                              ?.copyWith(color: tokens.muted),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                if (p.isLoading)
-                  const Padding(
-                    padding: EdgeInsets.all(48),
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                else if (p.error != null)
-                  ErrorView(message: p.error!, onRetry: p.load)
-                else
-                  ..._content(context, p),
-              ],
+                  if (p.isLoading)
+                    const Padding(
+                      padding: EdgeInsets.all(48),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else if (p.error != null)
+                    ErrorView(message: p.error!, onRetry: p.load)
+                  else
+                    ..._content(context, p),
+                ],
+              ),
             ),
           ),
         ),
