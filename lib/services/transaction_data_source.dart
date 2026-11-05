@@ -12,4 +12,8 @@ abstract class TransactionDataSource {
   /// Mengubah transaksi yang sudah ada (dicari berdasarkan id) dan
   /// mengembalikan baris hasil perubahan.
   Future<Transaction> update(Transaction transaction);
+
+  /// Menghapus transaksi berdasarkan id. Melempar exception jika tidak ada
+  /// baris yang terhapus.
+  Future<void> delete(int id);
 }

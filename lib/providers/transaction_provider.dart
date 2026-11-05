@@ -77,6 +77,25 @@ class TransactionProvider extends ChangeNotifier {
     return null;
   }
 
+    /// Menghapus transaksi. Daftar lokal hanya berubah jika server berhasil
+  /// menghapus; jika gagal, melempar [ApiException] dan data tetap utuh.
+  Future<void> remove(Transaction transaction) async {
+    final id = transaction.id;
+    if (id == null) {
+      throw ApiException(
+        'Transaksi belum tersimpan sehingga tidak dapat dihapus.',
+      );
+    }
+
+    try {
+      await _repository.deleteTransaction(id);
+      _items = _items.where((t) => t.id != id).toList();
+      notifyListeners();
+    } catch (e) {
+      throw ApiException(friendlyError(e));
+    }
+  }
+
   // ---- filter ----
 
   void setType(TransactionType? type) {

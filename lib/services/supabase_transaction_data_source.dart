@@ -81,4 +81,26 @@ class SupabaseTransactionDataSource implements TransactionDataSource {
       throw _toApi(e, 'memperbarui transaksi');
     }
   }
+
+  @override
+  Future<void> delete(int id) async {
+    try {
+      final rows = await _client
+          .from(_table)
+          .delete()
+          .eq('id', id)
+          .eq('student_id', AppConstants.studentId)
+          .select();
+
+      // Sama seperti update: jika id tidak ada atau policy RLS menolak,
+      // tidak ada error, hanya nol baris yang terhapus.
+      if (rows.isEmpty) {
+        throw ApiException(
+          'Transaksi tidak ditemukan atau penghapusan ditolak oleh aturan akses database.',
+        );
+      }
+    } on PostgrestException catch (e) {
+      throw _toApi(e, 'menghapus transaksi');
+    }
+  }
 }

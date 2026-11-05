@@ -85,4 +85,14 @@ class SampleTransactionDataSource implements TransactionDataSource {
     _rows[index] = transaction;
     return transaction;
   }
+
+  @override
+  Future<void> delete(int id) async {
+    await Future.delayed(delay);
+    if (shouldFail) throw Exception('Gagal menghapus data (simulasi)');
+
+    final before = _rows.length;
+    _rows.removeWhere((t) => t.id == id);
+    if (_rows.length == before) throw Exception('Transaksi tidak ditemukan');
+  }
 }

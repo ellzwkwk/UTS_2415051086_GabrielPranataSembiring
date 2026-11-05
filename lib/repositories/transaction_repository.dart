@@ -13,4 +13,6 @@ class TransactionRepository {
 
   Future<Transaction> updateTransaction(Transaction transaction) =>
       _dataSource.update(transaction);
+
+  Future<void> deleteTransaction(int id) => _dataSource.delete(id);
 }
