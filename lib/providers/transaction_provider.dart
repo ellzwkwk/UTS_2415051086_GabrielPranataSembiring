@@ -4,6 +4,7 @@ import '../models/transaction_filter.dart';
 import '../repositories/transaction_repository.dart';
 import '../utils/category_style.dart';
 import '../utils/error_message.dart';
+import '../services/api_exception.dart';
 
 class TransactionProvider extends ChangeNotifier {
   TransactionProvider(this._repository, {DateTime Function()? clock})
@@ -39,6 +40,18 @@ class TransactionProvider extends ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+    /// Menyimpan transaksi baru. Jika gagal, melempar [ApiException] dengan
+  /// pesan yang sudah ramah, supaya form dapat menampilkannya di SnackBar.
+  Future<Transaction> add(Transaction transaction) async {
+    try {
+      final created = await _repository.createTransaction(transaction);
+      _items = [..._items, created];
+      notifyListeners();
+      return created;
+    } catch (e) {
+      throw ApiException(friendlyError(e));
     }
   }
 

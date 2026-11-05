@@ -10,6 +10,8 @@ import '../widgets/error_view.dart';
 import '../widgets/ledger_row.dart';
 import '../widgets/transaction_tile.dart';
 import 'transaction_detail_screen.dart';
+import '../models/transaction.dart';
+import 'transaction_form_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key, this.onSeeAll});
@@ -127,6 +129,24 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
       ),
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => TransactionFormScreen.open(
+                  context,
+                  type: TransactionType.income,
+                ),
+                child: const Text('+ Pemasukan'),
+              ),
+            ),
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => TransactionFormScreen.open(
+                  context,
+                  type: TransactionType.expense,
+                ),
+                child: const Text('− Pengeluaran'),
+              ),
+            ),
       const _SectionTitle('Akun'),
       for (final entry in p.balanceByAccount.entries)
         LedgerRow(label: entry.key, value: formatNumber(entry.value)),

@@ -28,4 +28,23 @@ class SupabaseTransactionDataSource implements TransactionDataSource {
       throw ApiException('Gagal memuat transaksi dari database: ${e.message}');
     }
   }
+
+  @override
+  Future<Transaction> create(Transaction transaction) async {
+    try {
+      final row = await _client
+          .from(_table)
+          .insert(transaction.toJson())
+          .select()
+          .single();
+
+      return Transaction.fromJson(row);
+    } on PostgrestException catch (e) {
+      // 23514 = check constraint dilanggar (nominal, jenis, atau akun tidak valid)
+      if (e.code == '23514') {
+        throw ApiException('Data ditolak database karena tidak memenuhi aturan tabel.');
+      }
+      throw ApiException('Gagal menyimpan transaksi: ${e.message}');
+    }
+  }
 }

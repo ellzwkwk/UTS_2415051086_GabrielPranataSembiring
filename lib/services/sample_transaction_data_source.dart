@@ -51,10 +51,26 @@ class SampleTransactionDataSource implements TransactionDataSource {
     _tx(8, 'Honor asisten lab', 450000, _income, 'Honor', 'E-wallet', DateTime(2026, 11, 2)),
   ];
 
+  final List<Transaction> _rows = List.of(seed);
+
   @override
   Future<List<Transaction>> fetchAll() async {
     await Future.delayed(delay);
     if (shouldFail) throw Exception('Gagal memuat data (simulasi)');
-    return List.of(seed);
+    return List.of(_rows);
+  }
+
+  @override
+  Future<Transaction> create(Transaction transaction) async {
+    await Future.delayed(delay);
+    if (shouldFail) throw Exception('Gagal menyimpan data (simulasi)');
+
+    var maxId = 0;
+    for (final t in _rows) {
+      if ((t.id ?? 0) > maxId) maxId = t.id ?? 0;
+    }
+    final created = transaction.copyWith(id: maxId + 1);
+    _rows.add(created);
+    return created;
   }
 }

@@ -7,4 +7,7 @@ class TransactionRepository {
   final TransactionDataSource _dataSource;
 
   Future<List<Transaction>> getTransactions() => _dataSource.fetchAll();
+
+  Future<Transaction> createTransaction(Transaction transaction) =>
+      _dataSource.create(transaction);
 }

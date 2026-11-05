@@ -56,6 +56,9 @@ class AppTheme {
           color: selected ? scheme.onSurface : tokens.muted,
         );
 
+    UnderlineInputBorder line(Color color, [double width = 1]) =>
+        UnderlineInputBorder(borderSide: BorderSide(color: color, width: width));
+
     return base.copyWith(
       scaffoldBackgroundColor: scheme.surface,
       textTheme: textTheme,
@@ -84,6 +87,22 @@ class AppTheme {
           shape: shape,
           textStyle: const TextStyle(fontWeight: FontWeight.w600),
         ),
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: scheme.secondary,
+        foregroundColor: scheme.onSecondary,
+        elevation: 2,
+        shape: shape,
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        labelStyle: TextStyle(color: tokens.muted),
+        floatingLabelStyle: TextStyle(color: scheme.onSurface),
+        helperStyle: TextStyle(color: tokens.muted),
+        enabledBorder: line(tokens.outline),
+        focusedBorder: line(scheme.onSurface, 2),
+        errorBorder: line(scheme.error),
+        focusedErrorBorder: line(scheme.error, 2),
+        disabledBorder: line(tokens.rule),
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: scheme.surface,

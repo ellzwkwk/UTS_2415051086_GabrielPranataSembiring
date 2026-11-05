@@ -10,8 +10,10 @@ import '../widgets/ledger_table.dart';
 import '../widgets/option_chip.dart';
 import '../widgets/transaction_tile.dart';
 import 'transaction_detail_screen.dart';
+import 'transaction_form_screen.dart';
 
 const double _panelMinWidth = 1100;
+const double _fabSpace = 88;
 
 class HistoryScreen extends StatelessWidget {
   const HistoryScreen({super.key});
@@ -23,6 +25,11 @@ class HistoryScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Riwayat')),
       body: _body(provider),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => TransactionFormScreen.open(context),
+        icon: const Icon(Icons.add),
+        label: const Text('Tambah'),
+      ),
     );
   }
 
@@ -110,6 +117,7 @@ class _CompactList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
+      padding: const EdgeInsets.only(bottom: _fabSpace),
       itemCount: items.length,
       itemBuilder: (context, i) => _tile(context, items[i]),
     );
@@ -124,7 +132,7 @@ class _MediumGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GridView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.only(top: 8, bottom: _fabSpace),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         mainAxisExtent: 80,
@@ -160,7 +168,7 @@ class _ExpandedLedger extends StatelessWidget {
               children: [
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, _fabSpace),
                     child: LedgerTable(
                       items: items,
                       onRowTap: (t) => TransactionDetailScreen.open(context, t),

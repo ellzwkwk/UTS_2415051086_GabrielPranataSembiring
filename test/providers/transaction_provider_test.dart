@@ -15,6 +15,8 @@ class _FlakyDataSource implements TransactionDataSource {
     if (_calls == 1) throw Exception('Jaringan putus');
     return SampleTransactionDataSource.seed;
   }
+  @override
+  Future<Transaction> create(Transaction transaction) async => transaction;
 }
 
 TransactionProvider makeProvider({bool fail = false}) {
