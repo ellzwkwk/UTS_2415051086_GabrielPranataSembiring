@@ -12,14 +12,29 @@ import 'services/exchange_rate_service.dart';
 import 'services/supabase_transaction_data_source.dart';
 import 'theme/app_theme.dart';
 import 'utils/app_scroll_behavior.dart';
+import 'utils/error_hooks.dart';
+import 'widgets/startup_error_app.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  installErrorHooks();
 
-  await Supabase.initialize(
-    url: supabaseUrl,
-    publishableKey: supabasePublishableKey,
-  );
+  try {
+    await Supabase.initialize(
+      url: supabaseUrl,
+      publishableKey: supabasePublishableKey,
+    );
+  } catch (e) {
+    runApp(
+      StartupErrorApp(
+        message:
+            'Aplikasi gagal terhubung ke database. Periksa konfigurasi Supabase lalu coba lagi.',
+        detail: e.toString(),
+        onRetry: main,
+      ),
+    );
+    return;
+  }
 
   // Satu baris inilah yang menentukan sumber data transaksi.
   // Untuk data contoh: TransactionRepository(SampleTransactionDataSource())

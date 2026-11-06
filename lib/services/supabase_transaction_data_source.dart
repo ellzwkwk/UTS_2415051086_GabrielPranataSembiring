@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart'
     show PostgrestException, Supabase, SupabaseClient;
 import '../config/app_constants.dart';
 import '../models/transaction.dart';
 import 'api_exception.dart';
+import 'postgrest_error.dart';
 import 'transaction_data_source.dart';
 
 class SupabaseTransactionDataSource implements TransactionDataSource {
@@ -12,20 +14,36 @@ class SupabaseTransactionDataSource implements TransactionDataSource {
   final SupabaseClient _client;
 
   static const _table = 'transactions';
+  static const _timeout = Duration(seconds: 15);
 
-  /// 23514 = check constraint dilanggar (nominal, jenis, atau akun tidak valid).
-  ApiException _toApi(PostgrestException e, String action) {
-    if (e.code == '23514') {
-      return ApiException(
-        'Data ditolak database karena tidak memenuhi aturan tabel.',
-      );
+  /// Menjalankan satu permintaan dengan batas waktu, dan menerjemahkan
+  /// kesalahan database menjadi [ApiException] yang ramah.
+  ///
+  /// [mayHaveApplied] dipakai untuk permintaan tulis yang tidak aman diulang:
+  /// jika kena batas waktu, server mungkin sudah memprosesnya.
+  Future<T> _run<T>(
+    String action,
+    Future<T> Function() request, {
+    bool mayHaveApplied = false,
+  }) async {
+    try {
+      return await request().timeout(_timeout);
+    } on PostgrestException catch (e) {
+      throw apiExceptionFromPostgrest(e, action);
+    } on TimeoutException {
+      if (mayHaveApplied) {
+        throw ApiException(
+          'Server terlalu lama merespons. Transaksi mungkin sudah tersimpan, '
+          'periksa Riwayat sebelum mencoba lagi.',
+        );
+      }
+      rethrow;
     }
-    return ApiException('Gagal $action: ${e.message}');
   }
 
   @override
-  Future<List<Transaction>> fetchAll() async {
-    try {
+  Future<List<Transaction>> fetchAll() {
+    return _run('memuat transaksi', () async {
       final rows = await _client
           .from(_table)
           .select()
@@ -34,34 +52,36 @@ class SupabaseTransactionDataSource implements TransactionDataSource {
           .order('id', ascending: false);
 
       return rows.map(Transaction.fromJson).toList();
-    } on PostgrestException catch (e) {
-      throw ApiException('Gagal memuat transaksi dari database: ${e.message}');
-    }
+    });
   }
 
   @override
-  Future<Transaction> create(Transaction transaction) async {
-    try {
-      final row = await _client
-          .from(_table)
-          .insert(transaction.toJson())
-          .select()
-          .single();
+  Future<Transaction> create(Transaction transaction) {
+    return _run(
+      'menyimpan transaksi',
+      () async {
+        final row = await _client
+            .from(_table)
+            .insert(transaction.toJson())
+            .select()
+            .single();
 
-      return Transaction.fromJson(row);
-    } on PostgrestException catch (e) {
-      throw _toApi(e, 'menyimpan transaksi');
-    }
+        return Transaction.fromJson(row);
+      },
+      mayHaveApplied: true,
+    );
   }
 
   @override
-  Future<Transaction> update(Transaction transaction) async {
+  Future<Transaction> update(Transaction transaction) {
     final id = transaction.id;
     if (id == null) {
-      throw ApiException('Transaksi belum tersimpan sehingga tidak dapat diubah.');
+      throw ApiException(
+        'Transaksi belum tersimpan sehingga tidak dapat diubah.',
+      );
     }
 
-    try {
+    return _run('memperbarui transaksi', () async {
       final rows = await _client
           .from(_table)
           .update(transaction.toJson())
@@ -77,14 +97,12 @@ class SupabaseTransactionDataSource implements TransactionDataSource {
         );
       }
       return Transaction.fromJson(rows.first);
-    } on PostgrestException catch (e) {
-      throw _toApi(e, 'memperbarui transaksi');
-    }
+    });
   }
 
   @override
-  Future<void> delete(int id) async {
-    try {
+  Future<void> delete(int id) {
+    return _run('menghapus transaksi', () async {
       final rows = await _client
           .from(_table)
           .delete()
@@ -99,8 +117,6 @@ class SupabaseTransactionDataSource implements TransactionDataSource {
           'Transaksi tidak ditemukan atau penghapusan ditolak oleh aturan akses database.',
         );
       }
-    } on PostgrestException catch (e) {
-      throw _toApi(e, 'menghapus transaksi');
-    }
+    });
   }
 }
