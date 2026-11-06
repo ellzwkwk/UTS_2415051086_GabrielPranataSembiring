@@ -38,4 +38,28 @@ void main() {
       expect(formatLongDate(DateTime(2026, 11, 2)), '2 November 2026');
     });
   });
+
+  group('formatForeignAmount', () {
+    test('dua desimal dengan koma', () {
+      expect(formatForeignAmount(144.340975, 'USD'), '144,34');
+      expect(formatForeignAmount(129.1982, 'EUR'), '129,20');
+    });
+
+    test('pemisah ribuan dengan titik', () {
+      expect(formatForeignAmount(1234567.891, 'EUR'), '1.234.567,89');
+    });
+
+    test('yen tanpa desimal', () {
+      expect(formatForeignAmount(22697.62, 'JPY'), '22.698');
+    });
+
+    test('nilai negatif memakai tanda minus', () {
+      expect(formatForeignAmount(-12.5, 'USD'), '-12,50');
+    });
+
+    test('nilai yang dibulatkan menjadi nol tidak bertanda minus', () {
+      expect(formatForeignAmount(-0.001, 'USD'), '0,00');
+      expect(formatForeignAmount(0.004, 'USD'), '0,00');
+    });
+  });
 }

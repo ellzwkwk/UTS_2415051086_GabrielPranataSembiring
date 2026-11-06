@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'app_tokens.dart';
+
+const _fontFamily = 'Figtree';
 
 class AppTheme {
   AppTheme._();
@@ -43,8 +44,9 @@ class AppTheme {
       useMaterial3: true,
       brightness: scheme.brightness,
       colorScheme: scheme,
+      fontFamily: _fontFamily,
     );
-    final textTheme = GoogleFonts.figtreeTextTheme(base.textTheme).apply(
+    final textTheme = base.textTheme.apply(
       bodyColor: scheme.onSurface,
       displayColor: scheme.onSurface,
     );

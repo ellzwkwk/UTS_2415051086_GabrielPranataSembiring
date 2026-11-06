@@ -4,12 +4,14 @@ import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 import 'config/app_constants.dart';
 import 'config/supabase_config.dart';
 import 'providers/exchange_rate_provider.dart';
+import 'providers/theme_provider.dart';
 import 'providers/transaction_provider.dart';
 import 'repositories/exchange_rate_repository.dart';
 import 'repositories/transaction_repository.dart';
 import 'screens/app_shell.dart';
 import 'services/exchange_rate_service.dart';
 import 'services/supabase_transaction_data_source.dart';
+import 'services/theme_mode_store.dart';
 import 'theme/app_theme.dart';
 import 'utils/app_scroll_behavior.dart';
 import 'utils/error_hooks.dart';
@@ -36,6 +38,11 @@ Future<void> main() async {
     return;
   }
 
+  // Pilihan tema dibaca sebelum layar pertama digambar, supaya tidak ada
+  // kedipan dari tema terang ke gelap saat aplikasi dibuka.
+  final themeProvider = ThemeProvider(SharedPrefsThemeModeStore());
+  await themeProvider.load();
+
   // Satu baris inilah yang menentukan sumber data transaksi.
   // Untuk data contoh: TransactionRepository(SampleTransactionDataSource())
   final transactionRepository =
@@ -45,6 +52,7 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider.value(value: themeProvider),
         ChangeNotifierProvider(
           create: (_) => TransactionProvider(transactionRepository)..load(),
         ),
@@ -62,13 +70,15 @@ class DompetkuApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeMode = context.watch<ThemeProvider>().mode;
+
     return MaterialApp(
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       scrollBehavior: const AppScrollBehavior(),
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.system,
+      themeMode: themeMode,
       home: const AppShell(),
     );
   }

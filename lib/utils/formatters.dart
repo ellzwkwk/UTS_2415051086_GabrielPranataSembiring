@@ -50,3 +50,15 @@ String formatIdrRate(double value) {
   if (value >= 1000) return formatNumber(value.round());
   return value.toStringAsFixed(2).replaceAll('.', ',');
 }
+
+/// Nominal mata uang asing dengan format Indonesia.
+/// 144.34 USD -> "144,34", 22697.62 JPY -> "22.698" (yen tanpa desimal).
+String formatForeignAmount(double value, String code) {
+  final decimals = code == 'JPY' ? 0 : 2;
+  final fixed = value.abs().toStringAsFixed(decimals);
+  final parts = fixed.split('.');
+  final whole = formatNumber(int.parse(parts[0]));
+  final isZero = double.parse(fixed) == 0;
+  final sign = (value < 0 && !isZero) ? '-' : '';
+  return decimals == 0 ? '$sign$whole' : '$sign$whole,${parts[1]}';
+}
