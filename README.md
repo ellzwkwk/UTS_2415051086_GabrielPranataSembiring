@@ -7,7 +7,7 @@ agar kondisi dompet mudah dipantau. Dibuat sebagai Project UTS Pemrograman Mobil
 - **NIM:** 2415051086
 - **Kelas:** PTI-5C
 - **Tema:** Pencatat keuangan pribadi
-- **APK:** [UTS_2415051086_GabrielPranataSembiring.apk](GANTI_DENGAN_LINK_RELEASE)
+- **APK:** [UTS_2415051086_GabrielPranataSembiring.apk](https://github.com/ellzwkwk/UTS_2415051086_GabrielPranataSembiring/releases/download/v1.0.0/UTS_2415051086_GabrielPranataSembiring.apk)
 
 ## Fitur
 
